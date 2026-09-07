@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Placement Intelligence</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+<style>
+/* ===== PlacementIQ Performance Dashboard ===== */
+.performance-section{
+    margin:70px 0 20px;
+    padding:42px;
+    border:1px solid rgba(255,212,0,.16);
+    border-radius:28px;
+    background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,212,0,.025));
+    box-shadow:0 30px 90px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.08);
+    backdrop-filter:blur(18px);
+    position:relative;
+    overflow:hidden;
+}
+.performance-section:before{
+    content:"";
+    position:absolute;
+    top:0;left:12%;right:12%;height:2px;
+    background:#ffd400;
+    box-shadow:0 0 28px #ffd400;
+}
+.performance-heading{text-align:center;margin-bottom:34px}
+.performance-tag{font-size:11px;letter-spacing:3px;font-weight:900;color:#ffd400}
+.performance-heading h2{font-size:38px;margin:10px 0 8px;color:#fff}
+.performance-heading p{color:#999;margin:0 auto;max-width:650px;line-height:1.6}
+.performance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.performance-card{
+    padding:27px;
+    border-radius:22px;
+    background:rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,.08);
+    transition:.35s ease;
+    transform-style:preserve-3d;
+}
+.performance-card:hover{
+    transform:translateY(-7px) rotateX(1.5deg);
+    border-color:rgba(255,212,0,.45);
+    box-shadow:0 22px 55px rgba(0,0,0,.5),0 0 30px rgba(255,212,0,.08);
+}
+.performance-card-head{display:flex;align-items:center;gap:13px}
+.performance-icon{
+    width:48px;height:48px;display:grid;place-items:center;
+    border-radius:15px;background:rgba(255,212,0,.1);
+    border:1px solid rgba(255,212,0,.2);font-size:23px;
+}
+.performance-label{font-size:9px;letter-spacing:2px;color:#ffd400;font-weight:800}
+.performance-card h3{margin:3px 0 0;color:#fff;font-size:20px}
+.best-pill{
+    margin-left:auto;font-size:8px;font-weight:900;color:#000;
+    background:#ffd400;padding:7px 9px;border-radius:20px;
+}
+.selected-model{
+    margin:22px 0 18px;padding:13px 15px;border-radius:13px;
+    background:rgba(255,212,0,.055);border:1px solid rgba(255,212,0,.13);
+    display:flex;justify-content:space-between;gap:12px;align-items:center;
+}
+.selected-model span{font-size:11px;color:#777}
+.selected-model strong{font-size:12px;color:#ffd400}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.metric-box{
+    text-align:center;padding:14px 7px;border-radius:12px;
+    background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);
+}
+.metric-box strong{display:block;color:#fff;font-size:16px}
+.metric-box span{display:block;color:#777;font-size:9px;margin-top:5px}
+.highlight-metric{border-color:rgba(255,212,0,.3);background:rgba(255,212,0,.07)}
+.highlight-metric strong{color:#ffd400}
+.model-bars{margin-top:22px}
+.model-bar-row{
+    display:grid;grid-template-columns:145px 1fr 48px;
+    align-items:center;gap:10px;margin:12px 0;font-size:10px;color:#aaa;
+}
+.model-bar{height:7px;border-radius:20px;background:rgba(255,255,255,.07);overflow:hidden}
+.model-bar i{
+    display:block;height:100%;border-radius:20px;background:#ffd400;
+    box-shadow:0 0 12px rgba(255,212,0,.65);
+    animation:performanceGrow 1.3s ease both;
+}
+.model-bar-row b{color:#ffd400;text-align:right;font-size:10px}
+.performance-note{
+    margin-top:22px;padding:18px 20px;border-radius:17px;
+    display:flex;gap:14px;align-items:flex-start;
+    background:rgba(255,212,0,.045);
+    border:1px solid rgba(255,212,0,.12);
+}
+.note-icon{color:#ffd400;font-size:20px}
+.performance-note strong{color:#fff;font-size:13px}
+.performance-note p{color:#888;font-size:11px;line-height:1.6;margin:5px 0 0}
+@keyframes performanceGrow{from{width:0!important}}
+@media(max-width:800px){
+    .performance-section{padding:25px 17px}
+    .performance-grid{grid-template-columns:1fr}
+    .metrics-grid{grid-template-columns:repeat(2,1fr)}
+    .model-bar-row{grid-template-columns:115px 1fr 42px}
+    .performance-heading h2{font-size:30px}
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- Background decorations -->
+<div class="glow glow-one"></div>
+<div class="glow glow-two"></div>
+
+<nav class="navbar">
+
+    <div class="logo">
+        <div class="logo-icon">AI</div>
+        <span>Placement<span class="gradient-text">IQ</span></span>
+    </div>
+
+    <div class="nav-status">
+        <span class="status-dot"></span>
+        ML Model Online
+    </div>
+
+</nav>
+
+
+<main class="main-container">
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="hero-badge">
+            ✦ AI-POWERED CAREER ANALYTICS
+        </div>
+
+        <h1>
+            Know Your
+            <span class="gradient-text">Placement Potential.</span>
+        </h1>
+
+        <p>
+            Analyze your academic profile, technical skills and experience
+            to get an AI-powered placement prediction, salary estimate
+            and personalized career recommendation.
+        </p>
+
+        <div class="hero-stats">
+
+            <div>
+                <strong>100K+</strong>
+                <span>Student Records</span>
+            </div>
+
+            <div>
+                <strong>3</strong>
+                <span>ML Models Compared</span>
+            </div>
+
+            <div>
+                <strong>79%</strong>
+                <span>Salary R²</span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FORM CARD -->
+
+    <section class="glass-card">
+
+        <div class="section-heading">
+
+            <div>
+                <span class="section-number">01</span>
+                <h2>Build Your Profile</h2>
+                <p>
+                    Enter your current academic and technical profile.
+                </p>
+            </div>
+
+            <div class="required-text">
+                * Required
+            </div>
+
+        </div>
+
+
+        <form method="POST" id="predictionForm">
+
+
+            <!-- ACADEMIC -->
+
+            <div class="form-section">
+
+                <div class="section-title">
+                    <div class="title-icon">🎓</div>
+
+                    <div>
+                        <h3>Academic Profile</h3>
+                        <p>Your academic background</p>
+                    </div>
+                </div>
+
+
+                <div class="input-grid">
+
+                    <div class="field">
+
+                        <label>
+                            Branch
+                            <span>*</span>
+                        </label>
+
+                        <select name="branch" required>
+
+                            <option value="" disabled selected>
+                                Select branch
+                            </option>
+
+                            <option value="CSE">Computer Science (CSE)</option>
+                            <option value="ECE">Electronics (ECE)</option>
+                            <option value="EEE">Electrical (EEE)</option>
+                            <option value="ME">Mechanical</option>
+                            <option value="Civil">Civil</option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>
+                            College Tier
+                            <span>*</span>
+                        </label>
+
+                        <select name="college_tier" required>
+
+                            <option value="" disabled selected>
+                                Select tier
+                            </option>
+
+                            <option value="Tier 1">Tier 1</option>
+                            <option value="Tier 2">Tier 2</option>
+                            <option value="Tier 3">Tier 3</option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>
+                            CGPA
+                            <span>*</span>
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <input
+                                type="number"
+                                name="cgpa"
+                                min="0"
+                                max="10"
+                                step="0.1"
+                                placeholder="8.8"
+                                required>
+
+                            <span class="input-suffix">/10</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>
+                            Backlogs
+                            <span>*</span>
+                        </label>
+
+                        <input
+                            type="number"
+                            name="backlogs"
+                            min="0"
+                            placeholder="0"
+                            required>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- SKILLS -->
+
+            <div class="form-section">
+
+                <div class="section-title">
+
+                    <div class="title-icon">⚡</div>
+
+                    <div>
+                        <h3>Skills Assessment</h3>
+                        <p>Rate your skills from 0 to 10</p>
+                    </div>
+
+                </div>
+
+
+                <div class="input-grid">
+
+
+                    <div class="field">
+
+                        <label>Coding Skills <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="coding_skills"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            placeholder="8.5"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>DSA Score <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="dsa_score"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            placeholder="8.0"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>Aptitude Score <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="aptitude_score"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            placeholder="8.0"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>Communication <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="communication_skills"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            placeholder="8.0"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>ML Knowledge <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="ml_knowledge"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            placeholder="7.0"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>System Design <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="system_design"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            placeholder="6.0"
+                            required>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- EXPERIENCE -->
+
+            <div class="form-section">
+
+                <div class="section-title">
+
+                    <div class="title-icon">🚀</div>
+
+                    <div>
+                        <h3>Experience & Achievements</h3>
+                        <p>Showcase your practical experience</p>
+                    </div>
+
+                </div>
+
+
+                <div class="input-grid">
+
+
+                    <div class="field">
+
+                        <label>Internships <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="internships"
+                            min="0"
+                            placeholder="2"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>Projects <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="projects_count"
+                            min="0"
+                            placeholder="4"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>Certifications <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="certifications"
+                            min="0"
+                            placeholder="3"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>Hackathons <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="hackathons"
+                            min="0"
+                            placeholder="2"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>Open Source Contributions <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="open_source_contributions"
+                            min="0"
+                            placeholder="1"
+                            required>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label>Extracurriculars <span>*</span></label>
+
+                        <input
+                            type="number"
+                            name="extracurriculars"
+                            min="0"
+                            placeholder="3"
+                            required>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- BUTTON -->
+
+            <div class="submit-area">
+
+                <button type="submit" id="submitButton">
+
+                    <span class="button-icon">✦</span>
+
+                    <span>Analyze My Placement</span>
+
+                    <span class="arrow">→</span>
+
+                </button>
+
+                <p>
+                    Your information is processed locally by the ML pipeline.
+                </p>
+
+            </div>
+
+        </form>
+
+    </section>
+
+
+    <!-- RESULTS -->
+
+    {% if result %}
+
+        {% if result.error %}
+
+        <section class="error-card">
+
+            <div class="error-icon">!</div>
+
+            <div>
+                <h3>Prediction Error</h3>
+                <p>{{ result.error }}</p>
+            </div>
+
+        </section>
+
+        {% else %}
+
+
+        <section class="results-section">
+
+            <div class="results-header">
+
+                <div>
+
+                    <div class="result-badge">
+                        ✓ ANALYSIS COMPLETE
+                    </div>
+
+                    <h2>Your AI Career Report</h2>
+
+                    <p>
+                        Here's what our machine learning models predict
+                        based on your profile.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- MAIN RESULTS -->
+
+            <div class="result-grid">
+
+
+                <!-- PLACEMENT -->
+
+                <div class="result-card placement-card">
+
+                    <div class="result-card-top">
+
+                        <div class="result-icon">🎯</div>
+
+                        <span>PLACEMENT OUTLOOK</span>
+
+                    </div>
+
+
+                    {% if result.placed %}
+
+                        <div class="big-result success-text">
+                            PLACED
+                        </div>
+
+                    {% else %}
+
+                        <div class="big-result danger-text">
+                            NOT PLACED
+                        </div>
+
+                    {% endif %}
+
+
+                    <div class="probability">
+
+                        <div class="probability-header">
+
+                            <span>Estimated probability</span>
+
+                            <strong>
+                                {{ result.probability }}%
+                            </strong>
+
+                        </div>
+
+                        <div class="progress-bar">
+
+                            <div
+                                class="progress-fill"
+                                style="width: {{ result.probability }}%">
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SALARY -->
+
+                <div class="result-card salary-card">
+
+                    <div class="result-card-top">
+
+                        <div class="result-icon">💰</div>
+
+                        <span>ESTIMATED PACKAGE</span>
+
+                    </div>
+
+
+                    {% if result.placed %}
+
+                        <div class="salary-number">
+                            {{ result.salary }}
+                            <small>LPA</small>
+                        </div>
+
+                        <p class="result-description">
+                            Predicted annual package based on your
+                            current profile.
+                        </p>
+
+                    {% else %}
+
+                        <div class="salary-number">
+                            N/A
+                        </div>
+
+                        <p class="result-description">
+                            Salary prediction is shown for students
+                            predicted to be placed.
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- CAREER -->
+
+                <div class="result-card career-card">
+
+                    <div class="result-card-top">
+
+                        <div class="result-icon">🧠</div>
+
+                        <span>RECOMMENDED CAREER</span>
+
+                    </div>
+
+
+                    <div class="career-name">
+                        {{ result.career }}
+                    </div>
+
+                    <p class="result-description">
+                        Recommended based on your technical skill profile.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- IMPROVEMENTS -->
+
+            <div class="improvement-card">
+
+                <div class="improvement-heading">
+
+                    <div class="result-icon">📈</div>
+
+                    <div>
+
+                        <h3>Skills To Improve</h3>
+
+                        <p>
+                            Focus on these areas to strengthen your profile.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="improvement-list">
+
+                    {% for item in result.improvements %}
+
+                    <div class="improvement-item">
+
+                        <span class="check">→</span>
+
+                        <span>{{ item }}</span>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+
+            <!-- DISCLAIMER -->
+
+            <div class="disclaimer">
+
+                <span>ⓘ</span>
+
+                <p>
+                    This prediction is generated by machine learning
+                    models and should be treated as an estimate, not a
+                    guarantee. The current project uses a synthetic
+                    dataset for demonstration and educational purposes.
+                </p>
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+    {% endif %}
+
+
+        <!-- MODEL PERFORMANCE -->
+        <section class="performance-section">
+            <div class="performance-heading">
+                <span class="performance-tag">MODEL INTELLIGENCE</span>
+                <h2>How the AI Performs</h2>
+                <p>Three classification models and three regression models were evaluated on a held-out test set.</p>
+            </div>
+
+            <div class="performance-grid">
+
+                <div class="performance-card">
+                    <div class="performance-card-head">
+                        <div class="performance-icon">🎯</div>
+                        <div>
+                            <span class="performance-label">CLASSIFICATION</span>
+                            <h3>Placement Prediction</h3>
+                        </div>
+                        <span class="best-pill">BEST • F1</span>
+                    </div>
+
+                    <div class="selected-model">
+                        <span>Selected model</span>
+                        <strong>Logistic Regression</strong>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <strong>69.94%</strong>
+                            <span>Accuracy</span>
+                        </div>
+                        <div class="metric-box">
+                            <strong>71.65%</strong>
+                            <span>Precision</span>
+                        </div>
+                        <div class="metric-box">
+                            <strong>92.81%</strong>
+                            <span>Recall</span>
+                        </div>
+                        <div class="metric-box highlight-metric">
+                            <strong>80.87%</strong>
+                            <span>F1 Score</span>
+                        </div>
+                    </div>
+
+                    <div class="model-bars">
+                        <div class="model-bar-row">
+                            <span>Logistic Regression</span>
+                            <div class="model-bar"><i style="width:80.87%"></i></div>
+                            <b>80.87</b>
+                        </div>
+                        <div class="model-bar-row">
+                            <span>Random Forest</span>
+                            <div class="model-bar"><i style="width:80.53%"></i></div>
+                            <b>80.53</b>
+                        </div>
+                        <div class="model-bar-row">
+                            <span>Decision Tree</span>
+                            <div class="model-bar"><i style="width:79.52%"></i></div>
+                            <b>79.52</b>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="performance-card">
+                    <div class="performance-card-head">
+                        <div class="performance-icon">💰</div>
+                        <div>
+                            <span class="performance-label">REGRESSION</span>
+                            <h3>Salary Prediction</h3>
+                        </div>
+                        <span class="best-pill">BEST • R²</span>
+                    </div>
+
+                    <div class="selected-model">
+                        <span>Selected model</span>
+                        <strong>Linear Regression</strong>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box highlight-metric">
+                            <strong>0.7914</strong>
+                            <span>R² Score</span>
+                        </div>
+                        <div class="metric-box">
+                            <strong>0.945</strong>
+                            <span>MAE · LPA</span>
+                        </div>
+                        <div class="metric-box">
+                            <strong>1.185</strong>
+                            <span>RMSE · LPA</span>
+                        </div>
+                        <div class="metric-box">
+                            <strong>3</strong>
+                            <span>Models Tested</span>
+                        </div>
+                    </div>
+
+                    <div class="model-bars">
+                        <div class="model-bar-row">
+                            <span>Linear Regression</span>
+                            <div class="model-bar"><i style="width:79.14%"></i></div>
+                            <b>79.14</b>
+                        </div>
+                        <div class="model-bar-row">
+                            <span>Random Forest</span>
+                            <div class="model-bar"><i style="width:76.04%"></i></div>
+                            <b>76.04</b>
+                        </div>
+                        <div class="model-bar-row">
+                            <span>Decision Tree</span>
+                            <div class="model-bar"><i style="width:64.87%"></i></div>
+                            <b>64.87</b>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="performance-note">
+                <span class="note-icon">✦</span>
+                <div>
+                    <strong>Why compare multiple models?</strong>
+                    <p>The project evaluates different algorithms instead of assuming one model will perform best. The final model is selected using the appropriate evaluation metric.</p>
+                </div>
+            </div>
+        </section>
+
+
+</main>
+
+
+<footer>
+
+    <div>
+        <strong>PlacementIQ</strong>
+        <span> • AI Career Analytics</span>
+    </div>
+
+    <span>
+        Built with Python · Flask · Scikit-learn
+    </span>
+
+</footer>
+
+
+<script>
+
+    const form = document.getElementById("predictionForm");
+    const button = document.getElementById("submitButton");
+
+    if (form) {
+
+        form.addEventListener("submit", function () {
+
+            button.disabled = true;
+
+            button.querySelector("span:nth-child(2)").textContent =
+                "Analyzing Profile...";
+
+        });
+
+    }
+
+</script>
+
+</body>
+</html>
